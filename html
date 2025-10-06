@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muthoga & Wangui Family Tree</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS Variables for The Tree Styling */
+        :root {
+            --tree-color: #3b82f6; /* Tailwind blue-500 */
+            --node-bg: #eff6ff; /* Tailwind blue-50 */
+            --node-border: #93c5fd; /* Tailwind blue-300 */
+            --text-color: #1f2937; /* Tailwind gray-800 */
+            --accent-color: #f59e0b; /* Tailwind amber-500 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: var(--text-color);
+        }
+
+        .tree-container {
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        /* Base Node Styling */
+        .node {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            border-radius: 9999px; /* Full rounded corners */
+            border: 2px solid var(--node-border);
+            background-color: var(--node-bg);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 10px rgba(0, 0, 0, 0.15);
+            border-color: var(--tree-color);
+        }
+
+        /* Generation 1 (Founders) Styling */
+        .g1-node {
+            background-color: var(--tree-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            border-width: 3px;
+        }
+
+        /* The main tree line connector (G1 to G2) */
+        .g1-line {
+            width: 3px;
+            height: 2rem;
+            background-color: var(--tree-color);
+            margin: 0 auto;
+        }
+        
+        /* G2 Container for branches */
+        .g2-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 2rem;
+            position: relative;
+        }
+
+        /* Horizontal line connecting G2 nodes */
+        .g2-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background-color: var(--tree-color);
+        }
+
+        /* Individual Branch (G2 child and their descendants) */
+        .family-branch {
+            min-width: 250px; /* Ensure branches have a minimum size on desktop */
+            margin: 1rem 1.5rem;
+            position: relative;
+        }
+        
+        /* Summary (G2 Node) Styling */
+        .family-branch summary {
+            list-style: none; /* Hide default arrow */
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            display: block;
+        }
+
+        /* Create the vertical line from G2 node to the horizontal G2 line */
+        .family-branch summary::before {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 2rem;
+            background-color: var(--tree-color);
+            top: -2rem; /* Connects to the main horizontal line */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+        }
+
+        /* Add a custom arrow for the collapsible functionality */
+        .family-branch summary::after {
+            content: ' ▶';
+            display: inline-block;
+            transition: transform 0.2s;
+            margin-left: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        /* Rotate arrow when open */
+        .family-branch[open] summary::after {
+            transform: rotate(90deg);
+        }
+        
+        /* G3/G4 Descendants Container */
+        .descendants {
+            background-color: #ffffff;
+            border: 1px solid var(--node-border);
+            border-radius: 1rem;
+            margin-top: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.5s ease-out, max-height 0.5s ease-out;
+        }
+
+        /* Show content when details is open */
+        .family-branch[open] .descendants {
+            opacity: 1;
+            max-height: 1000px; /* A large enough value to allow content to expand */
+        }
+
+        .g3-line {
+            border-left: 2px solid var(--accent-color);
+            padding-left: 1rem;
+            margin-left: 0.5rem;
+        }
+        
+        .g3-node {
+            display: block;
+            margin: 0.5rem 0;
+            font-weight: 500;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .g4-node {
+            display: inline-block;
+            background-color: #fef3c7; /* Amber-100 */
+            color: #b45309; /* Amber-800 */
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.5rem;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .g2-container {
+                flex-direction: column;
+                align-items: center;
+                padding-top: 1rem;
+            }
+            .g2-container::before {
+                /* Remove horizontal line, only vertical connections needed */
+                display: none;
+            }
+            .family-branch {
+                width: 90%;
+                margin: 1rem 0;
+            }
+            .family-branch summary::before {
+                /* Make the vertical line for G2 shorter and centered */
+                height: 1rem;
+                top: -1rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold text-gray-900">Muthoga & Wangui Family Tree</h1>
+        <p class="text-xl text-gray-500 mt-2">Explore the generations by clicking the family branches.</p>
+    </header>
+
+    <div class="tree-container">
+
+        <!-- GENERATION 1 (G1: The Founders) -->
+        <div class="g1-node node shadow-xl">
+            Muthoga & Wangui
+        </div>
+        <div class="g1-line"></div>
+
+        <!-- GENERATION 2 (G2: Children) CONTAINER -->
+        <div class="g2-container">
+
+            <!-- Branch: Grace wa Kanyi -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-pink-100 border-pink-300 text-pink-800">Grace wa Kanyi</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">Wambui (G3)</div>
+                        <div class="g3-node">Nyambura (G3)</div>
+                        <div class="g3-node">Wangari (G3)</div>
+                        <div class="g3-node">Murugi (G3)</div>
+                        <div class="g3-node">Wangui (G3)</div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Branch: Johnson Macharia (Macharia muthoga) -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-purple-100 border-purple-300 text-purple-800">Johnson Macharia</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">
+                            Nyambura Macharia (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Johnson Macharia</span>
+                                <span class="g4-node">Gathoni Nyambura</span>
+                                <span class="g4-node">Muthoga Nyambura</span>
+                                <span class="g4-node">Wangui Nyambura</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Jane Wangui (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Wambungu</span>
+                                <span class="g4-node">Macharia</span>
+                                <span class="g4-node">Njoki</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wangari Macharia (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Gathoni Maureen</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wanjiku Macharia (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Macharia</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Muthoga Macharia (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Macharia</span>
+                                <span class="g4-node">Kiragu</span>
+                                <span class="g4-node">Melisa</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Branch: John Marungo -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-yellow-100 border-yellow-300 text-yellow-800">John Marungo</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">Ben Muthoga (G3)</div>
+                        <div class="g3-node">Wangui (G3)</div>
+                        <div class="g3-node">Liz Nyambura (G3)</div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Branch: Kihara Muthoga -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-teal-100 border-teal-300 text-teal-800">Kihara Muthoga</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">
+                            Ngera (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Githambo</span>
+                                <span class="g4-node">Kihara</span>
+                                <span class="g4-node">Trizah</span>
+                                <span class="g4-node">Ben Muthoga</span>
+                                <span class="g4-node">Njeri</span>
+                                <span class="g4-node">Manuu</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Muthoga (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Shiku</span>
+                                <span class="g4-node">Mary</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wangui (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Shiku</span>
+                                <span class="g4-node">Nyawira</span>
+                                <span class="g4-node">Shiru</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Branch: Wangari cucu wa huruma -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-red-100 border-red-300 text-red-800">Wangari cucu wa huruma</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">Mwangi(Baba so ) (G3)</div>
+                        <div class="g3-node">Mwaniki(Baba Padi) (G3)</div>
+                        <div class="g3-node">Muthoga(Baba Shiru) (G3)</div>
+                        <div class="g3-node">Wambui (G3)</div>
+                        <div class="g3-node">Wangui (G3)</div>
+                        <div class="g3-node">Wanjiku (G3)</div>
+                        <div class="g3-node">Wanjiru (G3)</div>
+                        <div class="g3-node">Wakanyi (G3)</div>
+                        <div class="g3-node">Muthoni (G3)</div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Branch: Julia Wambui -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-indigo-100 border-indigo-300 text-indigo-800">Julia Wambui</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">
+                            Kirigo (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Njeru Shanty</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wangui (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Simon Mbatia</span>
+                                <span class="g4-node">Nelson Ngugi</span>
+                                <span class="g4-node">Edwin Mwangi</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wambugu (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Esther</span>
+                                <span class="g4-node">Njoki</span>
+                                <span class="g4-node">Suleiman Mbatia</span>
+                                <span class="g4-node">Wambui</span>
+                                <span class="g4-node">Kirigo</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Muthoga Mbatia (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Simon Mbatia </span>
+                                <span class="g4-node">Alex Muthoga</span>
+                                <span class="g4-node">Wambugu</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Njugu (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Wanjugu Mbatia</span>
+                                <span class="g4-node">Wambui</span>
+                                <span class="g4-node">Kirigo</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Wangari (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Sylvia Wambui </span>
+                                <span class="g4-node">Magondu</span>
+                                <span class="g4-node">Nyoks</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Nyawira (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Wambui</span>
+                                <span class="g4-node">Shango</span>
+                                <span class="g4-node">Simon Mbatia</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Paul (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Julia Wambui</span>
+                                <span class="g4-node">Sam Mbatia</span>
+                                <span class="g4-node">lucy Nyambura</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Branch: Wachira wa rurguti -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-green-100 border-green-300 text-green-800">Wachira wa Rurguti</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">
+                            Jane Wangui Wachira (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Millicent Wambui</span>
+                                <span class="g4-node">Annette</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Martha Muthoni Wachira (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Janet</span>
+                                <span class="g4-node">Victor</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Robert Muthoga Wachira (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Jack</span>
+                                <span class="g4-node">Maryanne</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Branch: Celia wangeshi (Cucu Cecilia Wangeci) -->
+            <details class="family-branch shadow-md">
+                <summary class="node bg-orange-100 border-orange-300 text-orange-800">Celia Wangeci</summary>
+                <div class="descendants">
+                    <p class="text-xs text-gray-500 mb-2">Children (G3) & Grandchildren (G4):</p>
+                    <div class="g3-line">
+                        <div class="g3-node">
+                            Florence Nyambura Kibuu (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Kennedy</span>
+                                <span class="g4-node">Harun</span>
+                                <span class="g4-node">Phoebe</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Grace Wakio (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Kevin</span>
+                                <span class="g4-node">Njeri</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Nancy Nduta (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Jacky</span>
+                                <span class="g4-node">Raymond</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Anne Wambui (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Joy Wanja</span>
+                                <span class="g4-node">Patience</span>
+                                <span class="g4-node">Peace</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Muthoga (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Karanja</span>
+                                <span class="g4-node">Gichuru</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Gichuki (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Kamau</span>
+                                <span class="g4-node">Wangeci</span>
+                                <span class="g4-node">Gichuru</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Jane (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Joe</span>
+                                <span class="g4-node">Anne</span>
+                                <span class="g4-node">Charles</span>
+                            </div>
+                        </div>
+                        <div class="g3-node">
+                            Nyambura (G3)
+                            <div class="mt-1">
+                                <span class="g4-node">Shiro</span>
+                                <span class="g4-node">Vivian</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Kihara Muthoga and Macharia muthoga are listed earlier. -->
+            
+        </div>
+        <!-- END G2 CONTAINER -->
+
+    </div>
+</body>
+</html>
